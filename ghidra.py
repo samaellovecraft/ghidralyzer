@@ -38,7 +38,6 @@ def shouldRun():
 
 @click.command()
 @click.argument('filename', type=click.Path(exists=True))
-# @click.option('--verbose', '-v',  help="Print more output.")
 @click.option('-t', '--temp', 'temp', is_flag=True)
 def main(filename, temp):
     if os.path.isdir(filename):
