@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+
 import os
 import sys
 import click
@@ -9,7 +10,7 @@ import select
 from time import sleep
 
 PROJECT_DIRECTORY = '/tmp'
-GHIDRA_PATH = '/Applications/ghidra_10.0.2_PUBLIC/'
+GHIDRA_PATH = '/Applications/ghidra_10.3_PUBLIC/'
 
 def uniquify(path, sep = ''):
     def name_sequence():
@@ -24,6 +25,7 @@ def uniquify(path, sep = ''):
         dirname, basename = os.path.split(path)
         filename, ext = os.path.splitext(basename)
         fd, filename = tempfile.mkstemp(dir = dirname, prefix = filename, suffix = ext)
+        os.remove(filename)
         tempfile._name_sequence = orig
     return filename
 
