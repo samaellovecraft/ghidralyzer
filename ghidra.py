@@ -7,7 +7,7 @@ import subprocess
 import tempfile
 import itertools as IT
 import select
-from time import sleep
+from shutil import which
 
 PROJECT_DIRECTORY = '/tmp'
 GHIDRA_PATH = os.path.join(os.environ.get('LAB'), 'ghidra_11.0.3_PUBLIC/')
@@ -53,8 +53,16 @@ def main(filename, temp):
         out_dir = os.path.dirname(filename)
         out_dir = out_dir if out_dir != '' else '.'
     proj_name = os.path.splitext(os.path.basename(proj_file))[0]
-    file_output = subprocess.check_output(f'file "{filename}"', shell=True).decode('utf8')
-    print('\033[33m' + file_output + '\033[0m')
+
+    match os.name:
+        case 'nt':
+            file_exe = which('file', path=r'C:\Program Files\Git\usr\bin')
+        case _:
+            file_exe = which('file')
+    if file_exe:
+        file_output = subprocess.check_output([file_exe, filename], shell=True).decode('utf8')
+        print('\033[33m' + file_output + '\033[0m')
+
     r = shouldRun()
     if r:
         os.system(f'{GHIDRA_PATH}support/analyzeHeadless {out_dir} "{proj_name}" -import "{filename}"')
