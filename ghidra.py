@@ -1,12 +1,10 @@
 #!/usr/bin/env python3
 
 import os
-import sys
 import argparse
 import subprocess
 import tempfile
 import itertools as IT
-import select
 from shutil import which
 
 PROJECT_DIRECTORY = '/tmp'
@@ -30,14 +28,23 @@ def uniquify(path, sep = ''):
         tempfile._name_sequence = orig
     return filename
 
-def shouldRun():
+def is_cancel_requested(platform):
     print('\033[32m' + 'Will run analysis in 3 seconds, press any key to cancel...' + '\033[0m')
-    i, o, e = select.select( [sys.stdin], [], [], 3 )
-
-    if (i):
-        return False
-    else:
-        return True
+    if platform == 'nt':
+        from msvcrt import kbhit, getch
+        from time import time
+        start_time = time()
+        while True:
+            if kbhit():
+                getch()
+                return True
+            elif (time() - start_time) >= 3:
+                return False
+    elif platform == 'posix':
+        from select import select
+        from sys import stdin
+        i, _, _ = select( [stdin], [], [], 3 )
+        return i
 
 def main(filename, temp):
     if os.path.isdir(filename):
@@ -63,8 +70,8 @@ def main(filename, temp):
         file_output = subprocess.check_output([file_exe, filename], shell=True).decode('utf8')
         print('\033[33m' + file_output + '\033[0m')
 
-    r = shouldRun()
-    if r:
+    should_run = not is_cancel_requested(os.name)
+    if should_run:
         os.system(f'{GHIDRA_PATH}support/analyzeHeadless {out_dir} "{proj_name}" -import "{filename}"')
         os.system(f'{GHIDRA_PATH}ghidraRun "{proj_file}"')
 
