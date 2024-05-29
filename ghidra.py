@@ -2,7 +2,7 @@
 
 import os
 import sys
-import click
+import argparse
 import subprocess
 import tempfile
 import itertools as IT
@@ -10,7 +10,7 @@ import select
 from time import sleep
 
 PROJECT_DIRECTORY = '/tmp'
-GHIDRA_PATH = '/Applications/ghidra_10.3_PUBLIC/'
+GHIDRA_PATH = os.path.join(os.environ.get('LAB'), 'ghidra_11.0.3_PUBLIC/')
 
 def uniquify(path, sep = ''):
     def name_sequence():
@@ -30,7 +30,7 @@ def uniquify(path, sep = ''):
     return filename
 
 def shouldRun():
-    click.secho('Will run analysis in 3 seconds, press any key to cancel', fg='green')
+    print('\033[32m' + 'Will run analysis in 3 seconds, press any key to cancel...' + '\033[0m')
     i, o, e = select.select( [sys.stdin], [], [], 3 )
 
     if (i):
@@ -38,9 +38,6 @@ def shouldRun():
     else:
         return True
 
-@click.command()
-@click.argument('filename', type=click.Path(exists=True))
-@click.option('-t', '--temp', 'temp', is_flag=True)
 def main(filename, temp):
     if os.path.isdir(filename):
         return os.system(f'{GHIDRA_PATH}ghidraRun')
@@ -56,7 +53,7 @@ def main(filename, temp):
         out_dir = out_dir if out_dir != '' else '.'
     proj_name = os.path.splitext(os.path.basename(proj_file))[0]
     file_output = subprocess.check_output(f'file "{filename}"', shell=True).decode('utf8')
-    click.secho(file_output, fg='yellow')
+    print('\033[33m' + file_output + '\033[0m')
     r = shouldRun()
     if r:
         os.system(f'{GHIDRA_PATH}support/analyzeHeadless {out_dir} "{proj_name}" -import "{filename}"')
@@ -64,4 +61,9 @@ def main(filename, temp):
 
 
 if __name__ == '__main__':
-    main()
+    parser = argparse.ArgumentParser(description='Script to run Ghidra from the command line including automatic analysis and launching Ghidra for existing projects.')
+    parser.add_argument('filename', type=str, help='target file or directory name')
+    parser.add_argument('-t', '--temp', action='store_true', help='create a temporary project')
+
+    args = parser.parse_args()
+    main(args.filename, args.temp)
